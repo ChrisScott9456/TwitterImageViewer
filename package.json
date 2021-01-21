@@ -2,7 +2,7 @@
   "name": "twitterimageviewer",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/app.js",
   "dependencies": {
     "@types/express": "^4.17.11",
     "@types/node": "^13.5.0",

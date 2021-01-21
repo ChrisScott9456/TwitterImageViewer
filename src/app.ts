@@ -1,8 +1,9 @@
 import express from 'express';
 import Axios, { AxiosRequestConfig } from 'axios';
 import { to } from 'await-to-js';
+import { http } from './util/http';
 
-import * as twitter from '../keyfiles/twitter.json';
+const twitterAuth = require('../keyfiles/twitter.json');
 
 const app = express();
 const port = 3000;
@@ -20,12 +21,10 @@ app.get('/twitter/:id', async (req, res) => {
         method: 'GET',
         url: `https://api.twitter.com/2/users/${req.params.id}/tweets?media.fields=url&expansions=attachments.media_keys`,
         headers: {
-            'Authorization': 'Bearer ' + twitter.bearer_token
+            'Authorization': 'Bearer ' + twitterAuth.bearer_token
         }
     }
 
-    const [e, r] = await to(Axios.request(request));
-    delete r.request;
-    
+    const [e, r] = await to(http(request));
     res.send(e || r);
 });
