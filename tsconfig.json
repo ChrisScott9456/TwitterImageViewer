@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "strict": false,
+        "outDir": "dist",
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "target": "ES5",
+        "sourceMap": true,
+        "lib": [
+            "ES2018",
+            "ES2017.Object",
+            "DOM"
+        ]
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+    ]
+}
