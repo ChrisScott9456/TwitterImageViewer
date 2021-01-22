@@ -1,5 +1,4 @@
 import React from "react";
-import countries from "./countries";
 import { to } from "await-to-js";
 import { http } from "../util/http";
 import { AxiosRequestConfig } from "axios";
@@ -7,10 +6,11 @@ import Search from "antd/lib/input/Search";
 import { TwitterTimeline } from "../interfaces/TwitterTimeline";
 import { Card, List, Image } from "antd";
 import { TwitterPost } from "../interfaces/TwitterPost";
-import { Meta } from "antd/lib/list/Item";
+import Item, { Meta } from "antd/lib/list/Item";
 import { TwitterUser } from "../interfaces/TwitterUser";
 
 const twitterAuth = require('../keyfiles/twitter.json');
+const twitterRegex = new RegExp(/https:\/\/t.co\/.*/g);
 
 interface State {
   dataSet: TwitterPost[];
@@ -82,27 +82,26 @@ class SearchPage extends React.Component {
     this.timelineToPosts(r);
   }
 
-  regex = new RegExp(/https:\/\/t.co\/.*/g);
-
   render() {
     return (
       <div>
-        <Search placeholder="Enter Twitter Username" onSearch={this.performSearch} style={{ width: 500 }} />
-        <List
+        <Search className="search" placeholder="Enter Twitter Username" onSearch={this.performSearch} addonBefore="@"/>
+        {this.state.dataSet.length > 0 ? (<List
+          pagination={{position: "both"}}
           grid={{ gutter: 16, column: 5 }}
           dataSource={this.state.dataSet}
           renderItem={item => (
             <List.Item>
               <Card hoverable cover={<Image src={item.image_url} />}>
                   <Meta title={
-                    <a href={item.text.match(this.regex)?.[0]} target="_blank">
+                    <a href={item.text.match(twitterRegex)?.[0]} target="_blank" rel="noreferrer">
                       {item.text}
                     </a>
                   }/>
               </Card>
             </List.Item>
           )}
-        />
+        />) : null}
       </div>
     );
   }

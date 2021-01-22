@@ -8,7 +8,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={Twitter_Logo_Blue} className="App-logo" alt="logo" />
+        <a href=""><img src={Twitter_Logo_Blue} className="App-logo" alt="logo" /></a>
         <SearchPage />
       </header>
     </div>
