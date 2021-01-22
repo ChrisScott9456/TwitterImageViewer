@@ -8,5 +8,5 @@ export async function http(config: AxiosRequestConfig) {
         throw e;
     }
 
-    return r.data;
+    return r?.data;
 }
