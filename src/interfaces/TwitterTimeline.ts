@@ -1,11 +1,13 @@
 export interface TwitterTimeline {
-    data: {
-        attachments: {
-            media_keys: string[];
-        },
-        id: string,
-        text: string
-    },
+    data: [
+        {
+            attachments: {
+                media_keys: string[];
+            },
+            id: string,
+            text: string
+        }
+    ],
     includes: {
         media: [
             {
