@@ -58,11 +58,11 @@ class SearchPage extends React.Component {
   }
 
     const [e, r] = await to<TwitterUser>(http(request));
-    if (e) {
+    if (e || !r) {
       return '';
     }
 
-    return (r as TwitterUser)?.data?.id;
+    return r?.data?.id;
   }
 
   searchTwitter = async (id: string) => {
@@ -75,27 +75,30 @@ class SearchPage extends React.Component {
   }
 
     const [e, r] = await to<TwitterTimeline>(http(request));
-    if (e) {
+    if (e || !r) {
       return;
     }
 
-    this.timelineToPosts(r as TwitterTimeline);
+    this.timelineToPosts(r);
   }
+
+  regex = new RegExp(/https:\/\/t.co\/.*/g);
 
   render() {
     return (
       <div>
-        <Search placeholder="Enter Twitter username" onSearch={this.performSearch} style={{ width: 500 }} />
+        <Search placeholder="Enter Twitter Username" onSearch={this.performSearch} style={{ width: 500 }} />
         <List
-          grid={{ gutter: 16, column: 4 }}
+          grid={{ gutter: 16, column: 5 }}
           dataSource={this.state.dataSet}
           renderItem={item => (
             <List.Item>
-              <Card
-                hoverable
-                cover={<img alt="example" src={item.image_url} />}
-              >
-                <Meta title={item.text} description={item.text} />
+              <Card hoverable cover={<Image src={item.image_url} />}>
+                  <Meta title={
+                    <a href={item.text.match(this.regex)?.[0]} target="_blank">
+                      {item.text}
+                    </a>
+                  }/>
               </Card>
             </List.Item>
           )}
