@@ -1,5 +1,5 @@
 export interface TwitterPost {
-    id: string;
-    text: string;
-    image_url?: string;
+	id?: number;
+	text: string;
+	image_url: string;
 }
