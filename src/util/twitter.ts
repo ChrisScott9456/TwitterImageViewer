@@ -30,7 +30,7 @@ export class TwitterService {
 			return {
 				id: parseInt(data.id),
 				text: data.text,
-				image_url: arr.includes.media.find((media) => {
+				image_url: arr?.includes?.media.find((media) => {
 					if (!data.attachments) return null;
 
 					return data?.attachments.media_keys.find((key) => {
@@ -43,10 +43,12 @@ export class TwitterService {
 		return newArr.filter((el) => el.image_url);
 	}
 
-	static async getTwitterTimeline(userid: string, maxResults?: number): Promise<TwitterTimeline> {
+	static async getTwitterTimeline(userid: string, maxResults?: number, lastid?: string): Promise<TwitterTimeline> {
+		const lastIdParam = lastid ? `&until_id=${lastid}` : '';
+
 		const request: AxiosRequestConfig = {
 			method: 'GET',
-			url: `users/${userid}/tweets?max_results=${maxResults || 5}&media.fields=url&expansions=attachments.media_keys`,
+			url: `users/${userid}/tweets?max_results=${maxResults || 5}&media.fields=url${lastIdParam}&expansions=attachments.media_keys&exclude=retweets,replies`,
 			headers: {
 				Authorization: 'Bearer ' + twitterAuth.bearer_token,
 			},
@@ -60,7 +62,7 @@ export class TwitterService {
 		return r;
 	}
 
-	static addToCache(posts: TwitterPost[], cache: Map<number, TwitterPost>): Map<number, TwitterPost> {
+	static addToCache(posts: TwitterPost[], cache: Map<number, TwitterPost> = new Map()): Map<number, TwitterPost> {
 		// Get all posts that don't already exist in the cache
 		const newPosts = posts.filter((post) => !cache.get(post.id));
 

@@ -6,16 +6,17 @@ import { Meta } from 'antd/lib/list/Item';
 import { TwitterService } from '../util/twitter';
 
 const twitterRegex = new RegExp(/https:\/\/t.co\/.*/g);
-const paginationSize = 10;
-
-let cachedPosts = new Map<number, TwitterPost>();
+let cachedPosts = new Map<string, Map<number, TwitterPost>>();
 
 interface State {
 	dataSet: TwitterPost[];
 	searchValue: string;
 	userid: string;
 	thing: string;
+	currentPage: number;
 	paginationSize: number;
+	paginationId: string;
+	searchCounter: number;
 }
 
 class SearchPage extends React.Component {
@@ -24,40 +25,55 @@ class SearchPage extends React.Component {
 		searchValue: '',
 		userid: '',
 		thing: '',
+		currentPage: 1,
 		paginationSize: 10,
+		paginationId: '',
+		searchCounter: 0,
 	};
 
-	performSearch = async (username: string) => {
+	onSearch = async (username: string) => {
 		const id = await TwitterService.getTwitterIDByUsername(username);
 		this.setState({ userid: id });
 
-		const initTimeline = await TwitterService.getTwitterTimeline(id);
+		await this.executeSearch(id);
+	};
 
-		if (initTimeline) {
-			const initPosts = TwitterService.extractPostsFromTimeline(initTimeline);
-			cachedPosts = TwitterService.addToCache(initPosts, cachedPosts);
-			const initSet = [...cachedPosts.values()];
-			this.setState({ dataSet: initSet });
+	executeSearch = async (id: string, lastid?: string) => {
+		console.log(this.state.dataSet.length);
+		// Get latest timeline information
+		const timeline = await TwitterService.getTwitterTimeline(id, 10, lastid);
+		this.setState({ paginationId: timeline.data[timeline.data.length - 1].id });
+		const posts = TwitterService.extractPostsFromTimeline(timeline);
+
+		// Add new posts to the cachedPosts and set dataSet to display
+		cachedPosts.set(id, TwitterService.addToCache(posts, cachedPosts.get(id)));
+		const set = [...cachedPosts.get(id).values()];
+		this.setState({ dataSet: set });
+
+		// Get more search results
+		if (this.state.searchCounter <= 50 && this.state.dataSet.length < this.state.paginationSize * (this.state.currentPage + 9)) {
+			this.setState({ searchCounter: this.state.searchCounter++ });
+			await this.executeSearch(id, this.state.paginationId);
+
+			// Reset counter once we reach the max for the next search
+		} else if (this.state.searchCounter > 50) {
+			this.setState({ searchCounter: 0 });
 		}
-
-		// while (this.state.dataSet.length > this.state.paginationSize) {
-		// 	const timeline = await TwitterService.getTwitterTimeline(id, this.state.paginationSize);
-		// 	const posts = TwitterService.extractPostsFromTimeline(timeline);
-
-		// 	cachedPosts = TwitterService.addToCache(posts, cachedPosts);
-		// 	const set = [...cachedPosts.values()];
-		// 	this.setState({ dataSet: set });
-		// }
 	};
 
 	render() {
 		return (
 			<div>
 				<p>{this.state.thing}</p>
-				<Search className="search" placeholder="Enter Twitter Username" onSearch={this.performSearch} addonBefore="@" />
+				<Search className="search" placeholder="Enter Twitter Username" onSearch={this.onSearch} addonBefore="@" />
 				{this.state.dataSet.length > 0 ? (
 					<List
-						pagination={{ showSizeChanger: true, position: 'both' }}
+						pagination={{
+							current: this.state.currentPage,
+							showSizeChanger: true,
+							position: 'both',
+							onChange: (page) => this.setState({ currentPage: page }),
+						}}
 						grid={{ gutter: 16, column: 5 }}
 						dataSource={this.state.dataSet}
 						renderItem={(item) => (
