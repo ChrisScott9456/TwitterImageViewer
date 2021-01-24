@@ -4,9 +4,28 @@ import { Card, List, Image } from 'antd';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { Meta } from 'antd/lib/list/Item';
 import { TwitterService } from '../util/twitter';
+import to from 'await-to-js';
+import { AxiosRequestConfig } from 'axios';
+import { http } from '../util/http';
 
 const twitterRegex = new RegExp(/https:\/\/t.co\/.*/g);
 let cachedPosts = new Map<string, Map<number, TwitterPost>>();
+
+const test = async () => {
+	const request: AxiosRequestConfig = {
+		method: 'GET',
+		url: `/`,
+	};
+
+	const [e, r] = await to(http(request));
+	if (e || !r) {
+		console.log(e || 'ERROR');
+	}
+
+	console.log(r);
+};
+
+test();
 
 interface State {
 	dataSet: TwitterPost[];
