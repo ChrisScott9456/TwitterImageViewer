@@ -6,7 +6,7 @@ function App() {
 	return (
 		<div className="App">
 			<header className="App-header">
-				<a href="_blank">
+				<a href="/">
 					<img src={Twitter_Logo_Blue} className="App-logo" alt="logo" />
 				</a>
 				<SearchPage />

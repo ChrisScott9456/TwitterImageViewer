@@ -6,24 +6,9 @@ import { TwitterAPIService } from './util/twitter';
 import { CacheAPIService } from './cache/cache';
 import { TwitterPost } from './interfaces/TwitterPost';
 import bodyParser from 'body-parser';
-const cors = require('cors');
 
 const app = express();
 const port = 4000;
-
-// // Set up a whitelist and check against it:
-// var whitelist = ['http://localhost:3000/', 'http://localhost:5000/'];
-// var corsOptions = {
-// 	origin: function (origin: any, callback: any) {
-// 		if (whitelist.indexOf(origin) !== -1) {
-// 			callback(null, true);
-// 		} else {
-// 			callback(new Error('Not allowed by CORS'));
-// 		}
-// 	},
-// };
-
-// app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 
