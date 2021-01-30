@@ -1,65 +1,80 @@
 import React from 'react';
 import Search from 'antd/lib/input/Search';
 import { Card, List, Image } from 'antd';
-import { TwitterPost } from '../backend/interfaces/TwitterPost';
 import { Meta } from 'antd/lib/list/Item';
 import { TwitterService } from '../util/TwitterService';
+import { CacheService } from '../util/CacheService';
+import { CacheInterface } from '../backend/cache/cache.interface';
 
 const twitterRegex = new RegExp(/https:\/\/t.co\/.*/g);
-let cachedPosts = new Map<string, Map<number, TwitterPost>>();
 
 interface State {
-	dataSet: TwitterPost[];
+	dataSet: CacheInterface;
 	searchValue: string;
-	userid: string;
-	thing: string;
 	currentPage: number;
 	paginationSize: number;
 	paginationId: string;
 	searchCounter: number;
+	timelineFlag: boolean;
 }
 
 class SearchPage extends React.Component {
 	state: State = {
-		dataSet: [],
+		dataSet: { _id: '', posts: [] },
 		searchValue: '',
-		userid: '',
-		thing: '',
 		currentPage: 1,
-		paginationSize: 1,
+		paginationSize: 10,
 		paginationId: '',
 		searchCounter: 0,
+		timelineFlag: false,
 	};
 
 	onSearch = async (username: string) => {
+		this.setState({ timelineFlag: false });
 		const id = await TwitterService.getTwitterIDByUsername(username);
 		if (!id) return;
-		this.setState({ userid: id });
 
 		await this.executeSearch(id);
 	};
 
-	executeSearch = async (id: string, lastid?: string) => {
+	executeSearch = async (userid: string, lastid?: string, maxResults?: string) => {
+		if (this.state.timelineFlag) return;
+
+		// Get cache for the current user
+		const cache = await CacheService.getCache(userid);
+
 		// Get latest timeline information
-		const timeline = await TwitterService.getTwitterTimeline(id, '10', lastid);
-		console.log(timeline);
+		const timeline = await TwitterService.getTwitterTimeline(userid, maxResults || '5', lastid);
 		if (!timeline || !timeline?.data) {
 			console.error('FAILED TO RETRIEVE TIMELINE');
+			if (maxResults) this.setState({ timelineFlag: true });
 			return;
 		}
 
 		this.setState({ paginationId: timeline.data[timeline.data.length - 1].id });
 		const posts = TwitterService.extractPostsFromTimeline(timeline);
 
-		// Add new posts to the cachedPosts and set dataSet to display
-		cachedPosts.set(id, TwitterService.addToCache(posts, cachedPosts.get(id)));
-		const set = [...cachedPosts.get(id).values()];
-		this.setState({ dataSet: set });
+		// Build current cache
+		const [getMore, newCache] = CacheService.addToCache(cache || { _id: userid, posts: [] }, posts);
+		this.setState({ dataSet: newCache });
 
-		// Get more search results
-		if (this.state.searchCounter <= 50 && this.state.dataSet.length < this.state.paginationSize * (this.state.currentPage + 9)) {
+		// Add new posts to the cache
+		const cacheSuccess = await CacheService.insertCacheDocument(newCache);
+		if (!cacheSuccess) console.error('FAILED TO UPDATE CACHE WITH LATEST POSTS');
+
+		// Set lastid to the last id of the cache
+		if (!getMore) {
+			this.setState({ paginationId: newCache.posts[newCache.posts.length - 1].id });
+		}
+
+		// Recursively get more search results
+		if (
+			getMore && // If the cache isn't up to date yet
+			this.state.searchCounter <= 50 && // If we haven't surpassed the maximum search amount
+			this.state.dataSet.posts.length < this.state.paginationSize * (this.state.currentPage + 9) // If the current number of posts is less than the max # of default pages
+		) {
 			this.setState({ searchCounter: this.state.searchCounter++ });
-			await this.executeSearch(id, this.state.paginationId);
+			await this.executeSearch(userid, this.state.paginationId);
 
 			// Reset counter once we reach the max for the next search
 		} else if (this.state.searchCounter > 50) {
@@ -67,21 +82,29 @@ class SearchPage extends React.Component {
 		}
 	};
 
+	changePage(page: number) {
+		// Max 500 results && if on the last page -- get more results
+		if (this.state.dataSet.posts.length < 500 && page === Math.ceil(this.state.dataSet.posts.length / this.state.paginationSize)) {
+			this.executeSearch(this.state.dataSet._id, this.state.paginationId, '10');
+		}
+		this.setState({ currentPage: page });
+	}
+
 	render() {
 		return (
 			<div>
-				<p>{this.state.thing}</p>
 				<Search className="search" placeholder="Enter Twitter Username" onSearch={this.onSearch} addonBefore="@" />
-				{this.state.dataSet.length > 0 ? (
+				{this.state.dataSet.posts.length > 0 ? (
 					<List
 						pagination={{
 							current: this.state.currentPage,
 							showSizeChanger: true,
 							position: 'both',
-							onChange: (page) => this.setState({ currentPage: page }),
+							onChange: (page) => this.changePage(page),
+							onShowSizeChange: (current, size) => this.setState({ currentPage: current, paginationSize: size.toString() }),
 						}}
 						grid={{ gutter: 16, column: 5 }}
-						dataSource={this.state.dataSet}
+						dataSource={this.state.dataSet.posts}
 						renderItem={(item) => (
 							<List.Item>
 								<Card hoverable cover={<Image src={item.image_url} />}>

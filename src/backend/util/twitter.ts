@@ -18,7 +18,7 @@ export namespace TwitterAPIService {
 
 		const [e, r] = await to<TwitterUser>(http(request));
 		if (e || !r) {
-			throw e || new Error('INTERNAL APP ERROR');
+			throw e || new Error('ERROR GETTING USER ID');
 		}
 
 		return { id: r?.data?.id };
@@ -37,7 +37,7 @@ export namespace TwitterAPIService {
 
 		const [e, r] = await to<TwitterTimeline>(http(request));
 		if (e || !r) {
-			throw e || new Error('INTERNAL APP ERROR');
+			throw e || new Error('ERROR GETTING TIMELINE');
 		}
 
 		return r;

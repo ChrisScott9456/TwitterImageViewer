@@ -33,19 +33,6 @@ export class TwitterService {
 		return r;
 	}
 
-	static addToCache(posts: TwitterPost[], cache: Map<number, TwitterPost> = new Map()): Map<number, TwitterPost> {
-		// Get all posts that don't already exist in the cache
-		const newPosts = posts.filter((post) => !cache.get(post.id));
-
-		// Add all new posts to the cache map
-		for (const post of newPosts) {
-			cache.set(post.id, { text: post.text, image_url: post.image_url });
-		}
-
-		// Return a new map that is sorted by id
-		return new Map([...cache.entries()].sort((a, b) => b[0] - a[0]));
-	}
-
 	static extractPostsFromTimeline(arr: TwitterTimeline): TwitterPost[] {
 		const newArr = arr.data.map((data) => {
 			return {
