@@ -1,16 +1,14 @@
 import mongoose from 'mongoose';
 import to from 'await-to-js';
-
-// MongoDB Auth
-const mongo = require('../../../src/keyfiles/mongo.json');
+import { mongoAuth } from '../keyfiles/mongo';
 
 export async function connectMongo() {
 	// Connect to MongoDB
 	const uri = `mongodb://127.0.0.1/Primary?authSource=admin&w=1`;
 	const [e, r] = await to(
 		mongoose.connect(uri, {
-			user: mongo.user,
-			pass: mongo.password,
+			user: mongoAuth.user,
+			pass: mongoAuth.password,
 			useNewUrlParser: true,
 			useUnifiedTopology: true,
 		})
