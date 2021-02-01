@@ -10,7 +10,7 @@ import bodyParser from 'body-parser';
 const app = express();
 const port = 4000;
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
 
 app.listen(port, async () => {
 	console.log(`Example app listening at http://localhost:${port}`);

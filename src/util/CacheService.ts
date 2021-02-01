@@ -46,7 +46,7 @@ export class CacheService {
 
 		// Add new posts to the cache and sort
 		cache.posts = [...newPosts, ...cache.posts];
-		cache.posts.sort((a, b) => b.id - a.id);
+		cache.posts.sort((a, b) => Number(BigInt(b.id) - BigInt(a.id)));
 
 		return [newPosts.length === posts.length, cache]; // return boolean to determine if all the posts that were added are new
 	}

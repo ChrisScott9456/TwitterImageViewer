@@ -36,7 +36,7 @@ export class TwitterService {
 	static extractPostsFromTimeline(arr: TwitterTimeline): TwitterPost[] {
 		const newArr = arr.data.map((data) => {
 			return {
-				id: parseInt(data.id),
+				id: data.id,
 				text: data.text,
 				image_url: arr?.includes?.media.find((media) => {
 					if (!data.attachments) return null;
