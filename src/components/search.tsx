@@ -1,10 +1,11 @@
 import React from 'react';
 import Search from 'antd/lib/input/Search';
-import { Card, List, Image, Button } from 'antd';
+import { Card, List, Image, Button, Row, Tooltip } from 'antd';
 import { Meta } from 'antd/lib/list/Item';
 import { TwitterService } from '../util/TwitterService';
 import { CacheService } from '../util/CacheService';
 import { CacheInterface } from '../backend/cache/cache.interface';
+import { SwitcherOutlined, PlusOutlined } from '@ant-design/icons';
 
 const twitterRegex = new RegExp(/http[s]?:\/\/t.co\/[a-zA-Z0-9]*/g);
 const paginationSizeOptions = ['25', '50'];
@@ -17,6 +18,7 @@ interface StateInterface {
 	paginationId: string; // The ID of the last image in the dataset used to search for more posts
 	attemptCounter: number; // Counter used to prevent too many searches to find a new post w/ image to add
 	searchFlag: boolean; // Flag used to prevent load more button from searching while search already executing
+	closeText: boolean; // Flag to open/close tweet text boxes under images
 }
 
 const defaultState: StateInterface = {
@@ -26,6 +28,7 @@ const defaultState: StateInterface = {
 	paginationId: '',
 	attemptCounter: 0,
 	searchFlag: false,
+	closeText: false,
 };
 
 class SearchPage extends React.Component {
@@ -37,6 +40,8 @@ class SearchPage extends React.Component {
 	}
 
 	onSearch = async (username: string) => {
+		if (!username) return;
+
 		const id = await TwitterService.getTwitterIDByUsername(username);
 		if (!id) {
 			console.error('THAT USER DOES NOT EXIST!');
@@ -55,11 +60,6 @@ class SearchPage extends React.Component {
 	};
 
 	executeSearch = async (userid: string, lastid?: string, maxResults?: string) => {
-		this.setState({ attemptCounter: this.state.attemptCounter + 1 });
-
-		// Get cache for the current user
-		const cache = await CacheService.getCache(userid);
-
 		// Get latest timeline information
 		const timeline = await TwitterService.getTwitterTimeline(userid, maxResults || '5', lastid);
 
@@ -69,6 +69,10 @@ class SearchPage extends React.Component {
 			this.setState({ searchFlag: false });
 			return;
 		}
+
+		// Get cache for the current user
+		const cache = await CacheService.getCache(userid);
+		this.setState({ attemptCounter: this.state.attemptCounter + 1 }); // Increment attempt counter
 
 		console.log(timeline);
 
@@ -134,14 +138,19 @@ class SearchPage extends React.Component {
 	render() {
 		return (
 			<div>
-				<Search className="search" placeholder="Enter Twitter Username" onSearch={this.onSearch} addonBefore="@" />
-				<div>
+				<Row align="middle" justify="center" gutter={[10, 10]}>
+					<Search className="search" placeholder="Enter Twitter Username" onSearch={this.onSearch} addonBefore="@" />
 					{this.state.dataSet.posts.length > 0 && (this.onLastPage() || this.state.searchFlag) ? (
-						<Button size="large" shape="round" loading={this.state.searchFlag} onClick={() => this.loadMore()}>
-							Load More
-						</Button>
+						<Tooltip title="Load More" placement="top">
+							<Button className="button" type="primary" size="large" icon={<PlusOutlined />} loading={this.state.searchFlag} onClick={() => this.loadMore()} />
+						</Tooltip>
 					) : null}
-				</div>
+					{this.state.dataSet.posts.length > 0 ? (
+						<Tooltip title="Close Text" placement="top">
+							<Button className="button" size="large" icon={<SwitcherOutlined />} onClick={() => this.setState({ closeText: !this.state.closeText })} />
+						</Tooltip>
+					) : null}
+				</Row>
 				{this.state.dataSet.posts.length > 0 ? (
 					<List
 						pagination={{
@@ -159,14 +168,16 @@ class SearchPage extends React.Component {
 						dataSource={this.state.dataSet.posts}
 						renderItem={(item) => (
 							<List.Item>
-								<Card cover={<Image src={item.image_url} />}>
-									<Meta
-										title={
-											<a href={this.getTweetURL(item.text)} target="_blank" rel="noreferrer">
-												{item.text}
-											</a>
-										}
-									/>
+								<Card bodyStyle={{ display: this.state.closeText ? 'none' : '' }} cover={<Image src={item.image_url} />}>
+									{!this.state.closeText ? (
+										<Meta
+											title={
+												<a href={this.getTweetURL(item.text)} target="_blank" rel="noreferrer">
+													{item.text}
+												</a>
+											}
+										/>
+									) : null}
 								</Card>
 							</List.Item>
 						)}
