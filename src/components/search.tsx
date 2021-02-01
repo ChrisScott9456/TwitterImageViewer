@@ -1,6 +1,6 @@
 import React from 'react';
 import Search from 'antd/lib/input/Search';
-import { Card, List, Image, Button, Row, Tooltip } from 'antd';
+import { Card, List, Image, Button, Row, Tooltip, Alert, Divider } from 'antd';
 import { Meta } from 'antd/lib/list/Item';
 import { TwitterService } from '../util/TwitterService';
 import { CacheService } from '../util/CacheService';
@@ -12,6 +12,7 @@ const paginationSizeOptions = ['25', '50'];
 const maxSearchAttempts = 5;
 
 interface StateInterface {
+	searchString: string; // The username string of the search
 	dataSet: CacheInterface; // The posts displayed in the grid
 	currentPage: number; // Current page number
 	paginationSize: number; // Total results to display per page
@@ -19,9 +20,11 @@ interface StateInterface {
 	attemptCounter: number; // Counter used to prevent too many searches to find a new post w/ image to add
 	searchFlag: boolean; // Flag used to prevent load more button from searching while search already executing
 	closeText: boolean; // Flag to open/close tweet text boxes under images
+	inputError: boolean; // Flag to show error if user inputs wrong username format
 }
 
 const defaultState: StateInterface = {
+	searchString: '',
 	dataSet: { _id: '', posts: [] },
 	currentPage: 1,
 	paginationSize: parseInt(paginationSizeOptions[0]),
@@ -29,6 +32,7 @@ const defaultState: StateInterface = {
 	attemptCounter: 0,
 	searchFlag: false,
 	closeText: false,
+	inputError: false,
 };
 
 class SearchPage extends React.Component {
@@ -51,9 +55,12 @@ class SearchPage extends React.Component {
 		// If searching for a different user than the previous search, reset state
 		if (this.state.dataSet?._id !== id) {
 			this.defaultState();
+		} else {
+			return; // Do not perform search if we've already searched for the current username
 		}
 
 		// Set to currently searching
+		this.setState({ searchString: username });
 		this.setState({ searchFlag: true });
 
 		await this.executeSearch(id);
@@ -130,16 +137,52 @@ class SearchPage extends React.Component {
 		}
 	}
 
-	getTweetURL(text: string) {
+	// Gets all urls within tweet text and turns them into clickable links
+	getTweetURL(text: string): JSX.Element {
 		const value = (text + ' ').match(twitterRegex);
-		return value?.[1] || value?.[0];
+		text = text.replaceAll(twitterRegex, ' _TWITTERREGEXSTRINGTEMPLATE_ ');
+
+		let splitText: any[] = text.split(' ');
+
+		splitText = splitText.map((el) => {
+			if (el === '_TWITTERREGEXSTRINGTEMPLATE_') {
+				const url = value.shift() || '';
+				return (
+					<a href={url} target="_blank" rel="noreferrer">
+						{url}
+					</a>
+				);
+			}
+
+			return el;
+		});
+
+		return <span className="cardBody">{splitText.map((el) => (typeof el === 'string' ? `${el} ` : el))}</span>;
+	}
+
+	trimWhitespace(e: React.ChangeEvent<HTMLInputElement>) {
+		if (this.validateUsername(e.target.value.trim())) {
+			this.setState({ inputError: false, searchString: e.target.value.trim() });
+		} else {
+			this.setState({ inputError: true });
+		}
+	}
+
+	// Make sure username only contains letters, numbers, or underscore
+	validateUsername(username: string) {
+		return username ? /^\w+$/.test(username) : true;
 	}
 
 	render() {
 		return (
 			<div>
+				{this.state.inputError ? (
+					<Divider>
+						<Alert className="search" style={{ textAlign: 'left' }} message="Only letters, numbers, and underscores are allowed in a Twitter username!" type="error" showIcon />
+					</Divider>
+				) : null}
 				<Row align="middle" justify="center" gutter={[10, 10]}>
-					<Search className="search" placeholder="Enter Twitter Username" onSearch={this.onSearch} addonBefore="@" />
+					<Search className="search" placeholder="Enter Twitter Username" value={this.state.searchString} onChange={(e) => this.trimWhitespace(e)} onSearch={(value) => this.onSearch(value.trim())} addonBefore="@" />
 					{this.state.dataSet.posts.length > 0 && (this.onLastPage() || this.state.searchFlag) ? (
 						<Tooltip title="Load More" placement="top">
 							<Button className="button" type="primary" size="large" icon={<PlusOutlined />} loading={this.state.searchFlag} onClick={() => this.loadMore()} />
@@ -168,13 +211,16 @@ class SearchPage extends React.Component {
 						dataSource={this.state.dataSet.posts}
 						renderItem={(item) => (
 							<List.Item>
-								<Card bodyStyle={{ display: this.state.closeText ? 'none' : '' }} cover={<Image src={item.image_url} />}>
+								<Card
+									bodyStyle={{ display: this.state.closeText ? 'none' : '' }}
+									cover={<List grid={{ column: item.image_urls.length === 1 ? 1 : 2 }} dataSource={item.image_urls} renderItem={(image) => <Image src={image} />} />}
+								>
 									{!this.state.closeText ? (
 										<Meta
 											title={
-												<a href={this.getTweetURL(item.text)} target="_blank" rel="noreferrer">
-													{item.text}
-												</a>
+												// <a href={this.getTweetURL(item.text)} target="_blank" rel="noreferrer">
+												this.getTweetURL(item.text)
+												// </a>
 											}
 										/>
 									) : null}

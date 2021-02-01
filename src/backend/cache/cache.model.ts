@@ -9,7 +9,7 @@ const schema = new Schema({
 			{
 				id: { type: String, required: true },
 				text: { type: String, required: true },
-				image_url: { type: String, required: true },
+				image_urls: [{ type: String, required: true }],
 			},
 		],
 		required: true,

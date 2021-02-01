@@ -81,3 +81,7 @@ span.ant-input-group-addon {
 	justify-content: center;
 	margin: 1vmax 0;
 }
+
+.cardBody {
+	font-size: 0.75vmax;
+}

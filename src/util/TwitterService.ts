@@ -1,7 +1,7 @@
 import { to } from 'await-to-js';
 import { AxiosRequestConfig } from 'axios';
 import { TwitterPost } from '../backend/interfaces/TwitterPost';
-import { TwitterTimeline } from '../backend/interfaces/TwitterTimeline';
+import { TwitterTimeline, TwitterTimelineData, TwitterTimelineMedia } from '../backend/interfaces/TwitterTimeline';
 import { http } from '../backend/util/http';
 
 export class TwitterService {
@@ -33,21 +33,25 @@ export class TwitterService {
 		return r;
 	}
 
+	static getImageUrls(data: TwitterTimelineData, includes: TwitterTimelineMedia): string[] {
+		if (!data?.attachments) return null; // If no media included, return null
+
+		return data.attachments.media_keys.map((media_key) => {
+			return includes.media.find((key) => {
+				return key.media_key === media_key;
+			}).url;
+		});
+	}
+
 	static extractPostsFromTimeline(arr: TwitterTimeline): TwitterPost[] {
-		const newArr = arr.data.map((data) => {
+		const newArr: TwitterPost[] = arr.data.map((data) => {
 			return {
 				id: data.id,
 				text: data.text,
-				image_url: arr?.includes?.media.find((media) => {
-					if (!data.attachments) return null;
-
-					return data?.attachments.media_keys.find((key) => {
-						return media.media_key === key;
-					});
-				})?.url,
+				image_urls: this.getImageUrls(data, arr.includes),
 			};
 		});
 
-		return newArr.filter((el) => el.image_url);
+		return newArr.filter((el) => el?.image_urls && el?.image_urls.length > 0); // Only return results with image_urls
 	}
 }

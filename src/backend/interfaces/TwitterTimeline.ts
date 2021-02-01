@@ -1,20 +1,22 @@
 export interface TwitterTimeline {
-	data: [
+	data: TwitterTimelineData[];
+	includes: TwitterTimelineMedia;
+}
+
+export interface TwitterTimelineData {
+	attachments: {
+		media_keys: string[];
+	};
+	id: string;
+	text: string;
+}
+
+export interface TwitterTimelineMedia {
+	media: [
 		{
-			attachments: {
-				media_keys: string[];
-			};
-			id: string;
-			text: string;
+			media_key: string;
+			type: string;
+			url: string;
 		}
 	];
-	includes: {
-		media: [
-			{
-				media_key: string;
-				type: string;
-				url: string;
-			}
-		];
-	};
 }
