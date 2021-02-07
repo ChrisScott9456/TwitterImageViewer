@@ -6,10 +6,12 @@ import { TwitterService } from '../util/TwitterService';
 import { CacheService } from '../util/CacheService';
 import { CacheInterface } from '../backend/cache/cache.interface';
 import { SwitcherOutlined, PlusOutlined } from '@ant-design/icons';
+import { notify } from '../util/notification';
 
 const twitterRegex = new RegExp(/http[s]?:\/\/t.co\/[a-zA-Z0-9]*/g);
 const paginationSizeOptions = ['25', '50'];
 const maxSearchAttempts = 5;
+const maxLoadMoreAttempts = 3;
 
 interface StateInterface {
 	searchString: string; // The username string of the search
@@ -21,6 +23,7 @@ interface StateInterface {
 	searchFlag: boolean; // Flag used to prevent load more button from searching while search already executing
 	closeText: boolean; // Flag to open/close tweet text boxes under images
 	inputError: boolean; // Flag to show error if user inputs wrong username format
+	loadMoreAttempts: number; // Total number of times a user can click the Load More button and get an error before the button disappears
 }
 
 const defaultState: StateInterface = {
@@ -33,6 +36,7 @@ const defaultState: StateInterface = {
 	searchFlag: false,
 	closeText: false,
 	inputError: false,
+	loadMoreAttempts: 0,
 };
 
 class SearchPage extends React.Component {
@@ -48,7 +52,7 @@ class SearchPage extends React.Component {
 
 		const id = await TwitterService.getTwitterIDByUsername(username);
 		if (!id) {
-			console.error('THAT USER DOES NOT EXIST!');
+			notify('THAT USER DOES NOT EXIST!');
 			return;
 		}
 
@@ -72,7 +76,7 @@ class SearchPage extends React.Component {
 
 		// If issue receiving timeline
 		if (!timeline) {
-			console.error('FAILED TO RETRIEVE TIMELINE');
+			notify('FAILED TO RETRIEVE TIMELINE');
 			this.setState({ searchFlag: false });
 			return;
 		}
@@ -97,7 +101,7 @@ class SearchPage extends React.Component {
 
 				// Add new posts to the cache
 				const cacheSuccess = await CacheService.insertCacheDocument(newCache);
-				if (!cacheSuccess) console.error('FAILED TO UPDATE CACHE WITH LATEST POSTS');
+				if (!cacheSuccess) notify('FAILED TO UPDATE CACHE WITH LATEST POSTS');
 
 				// Set lastid to the last id of the cache
 				if (!getMore) {
@@ -124,7 +128,8 @@ class SearchPage extends React.Component {
 		) {
 			await this.executeSearch(userid, this.state.paginationId);
 		} else if (this.state.attemptCounter > maxSearchAttempts) {
-			console.error('MAX SEARCH ATTEMPTS REACHED');
+			notify('MAX SEARCH ATTEMPTS REACHED', 'If clicking the Load More button causes this error again, Twitter will not return any more results.', 10);
+			this.setState({ loadMoreAttempts: this.state.loadMoreAttempts + 1 });
 		}
 
 		// Set the searchFlag to false when done searching so we can allow searching again
@@ -138,8 +143,8 @@ class SearchPage extends React.Component {
 	}
 
 	loadMore() {
-		// Only execute if not already searching and currently on the last page
 		if (!this.state.searchFlag && this.onLastPage()) {
+			// Only execute if not already searching and currently on the last page
 			this.setState({ searchFlag: true });
 			this.executeSearch(this.state.dataSet._id, this.state.paginationId, '10');
 		}
@@ -191,7 +196,7 @@ class SearchPage extends React.Component {
 				) : null}
 				<Row align="middle" justify="center" gutter={[10, 10]}>
 					<Search className="search" placeholder="Enter Twitter Username" value={this.state.searchString} onChange={(e) => this.trimWhitespace(e)} onSearch={(value) => this.onSearch(value.trim())} addonBefore="@" />
-					{this.state.dataSet.posts.length > 0 && (this.onLastPage() || this.state.searchFlag) ? (
+					{this.state.dataSet.posts.length > 0 && (this.onLastPage() || this.state.searchFlag) && this.state.loadMoreAttempts < maxLoadMoreAttempts ? (
 						<Tooltip title="Load More" placement="top">
 							<Button className="button" type="primary" size="large" icon={<PlusOutlined />} loading={this.state.searchFlag} onClick={() => this.loadMore()} />
 						</Tooltip>
@@ -221,7 +226,7 @@ class SearchPage extends React.Component {
 							<List.Item>
 								<Card
 									bodyStyle={{ display: this.state.closeText ? 'none' : '' }}
-									cover={<List grid={{ column: item?.image_urls?.length < 1 ? 2 : 1 }} dataSource={item?.image_urls} renderItem={(image) => <Image src={image} />} />}
+									cover={<List grid={{ column: item.image_urls.length === 1 ? 1 : 2 }} dataSource={item?.image_urls} renderItem={(image) => <Image src={image} />} />}
 								>
 									{!this.state.closeText ? <Meta title={this.getTweetURL(item?.text)} /> : null}
 								</Card>

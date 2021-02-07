@@ -33,6 +33,9 @@ export class CacheService {
 			throw e;
 		}
 
+		r.posts = this.filterPosts(r.posts);
+		console.log(r);
+
 		return r;
 	}
 
@@ -45,9 +48,19 @@ export class CacheService {
 		}
 
 		// Add new posts to the cache and sort
-		cache.posts = [...newPosts, ...cache.posts];
+		cache.posts = this.filterPosts([...newPosts, ...cache.posts]);
 		cache.posts.sort((a, b) => Number(BigInt(b.id) - BigInt(a.id)));
 
 		return [newPosts.length === posts.length, cache]; // return boolean to determine if all the posts that were added are new
+	}
+
+	/**
+	 * This function filters out all posts that do not contain values for all the required fields to be stored into the cache
+	 * @param posts - Array of TwitterPost to be filtered out
+	 */
+	static filterPosts(posts: TwitterPost[]) {
+		return posts.filter((post) => {
+			return post.id && post.text && post.image_urls.find((el) => el !== null) && post.image_urls.length > 0;
+		});
 	}
 }
