@@ -1,6 +1,7 @@
 export interface TwitterTimeline {
 	data: TwitterTimelineData[];
 	includes: TwitterTimelineMedia;
+	meta: TwitterMeta;
 }
 
 export interface TwitterTimelineData {
@@ -19,4 +20,11 @@ export interface TwitterTimelineMedia {
 			url: string;
 		}
 	];
+}
+
+export interface TwitterMeta {
+	oldest_id?: string;
+	newest_id?: string;
+	result_count: number;
+	next_token?: string;
 }

@@ -108,6 +108,14 @@ class SearchPage extends React.Component {
 			}
 		}
 
+		// If no results received, retry one time with larger max_results set
+		if (!timeline?.data && timeline?.meta?.result_count === 0 && this.state.attemptCounter <= maxSearchAttempts) {
+			this.setState({ attemptCounter: maxSearchAttempts + 1 }); // Set to maxSearchAttempts so it only executes once
+			const newMaxResults = maxResults && parseInt(maxResults) + 5 > 100 ? `${parseInt(maxResults) + 5}` : '10'; // Current maxResults + 5 (if > 100) or default to 10 (initial is 5 so we just double it)
+			this.executeSearch(userid, this.state.paginationId, newMaxResults);
+			return;
+		}
+
 		// Recursively get more search results
 		if (
 			lastid &&
@@ -148,7 +156,7 @@ class SearchPage extends React.Component {
 			if (el === '_TWITTERREGEXSTRINGTEMPLATE_') {
 				const url = value.shift() || '';
 				return (
-					<a href={url} target="_blank" rel="noreferrer">
+					<a key={url} href={url} target="_blank" rel="noreferrer">
 						{url}
 					</a>
 				);
@@ -213,17 +221,9 @@ class SearchPage extends React.Component {
 							<List.Item>
 								<Card
 									bodyStyle={{ display: this.state.closeText ? 'none' : '' }}
-									cover={<List grid={{ column: item.image_urls.length === 1 ? 1 : 2 }} dataSource={item.image_urls} renderItem={(image) => <Image src={image} />} />}
+									cover={<List grid={{ column: item?.image_urls?.length < 1 ? 2 : 1 }} dataSource={item?.image_urls} renderItem={(image) => <Image src={image} />} />}
 								>
-									{!this.state.closeText ? (
-										<Meta
-											title={
-												// <a href={this.getTweetURL(item.text)} target="_blank" rel="noreferrer">
-												this.getTweetURL(item.text)
-												// </a>
-											}
-										/>
-									) : null}
+									{!this.state.closeText ? <Meta title={this.getTweetURL(item?.text)} /> : null}
 								</Card>
 							</List.Item>
 						)}

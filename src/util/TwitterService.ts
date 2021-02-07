@@ -22,7 +22,7 @@ export class TwitterService {
 	static async getTwitterTimeline(userid: string, maxResults?: string, lastid?: string) {
 		const request: AxiosRequestConfig = {
 			method: 'GET',
-			url: `/getTwitterTimeline/${userid}/${maxResults}/${lastid}`,
+			url: `/getTwitterTimeline/${userid}/${maxResults}/${lastid || ''}`,
 		};
 
 		const [e, r] = await to<TwitterTimeline>(http(request));
@@ -38,8 +38,8 @@ export class TwitterService {
 
 		return data.attachments.media_keys.map((media_key) => {
 			return includes.media.find((key) => {
-				return key.media_key === media_key;
-			}).url;
+				return key.media_key === media_key && key.type === 'photo';
+			})?.url;
 		});
 	}
 
@@ -48,10 +48,10 @@ export class TwitterService {
 			return {
 				id: data.id,
 				text: data.text,
-				image_urls: this.getImageUrls(data, arr.includes),
+				image_urls: (this.getImageUrls(data, arr.includes) || []).filter((el) => el !== undefined),
 			};
 		});
 
-		return newArr.filter((el) => el?.image_urls && el?.image_urls.length > 0); // Only return results with image_urls
+		return newArr.filter((el) => el?.image_urls.length > 0); // Only return results with image_urls
 	}
 }

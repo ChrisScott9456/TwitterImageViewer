@@ -27,3 +27,5 @@ keyfiles
 .vscode
 dist
 ecosystem.config.js
+
+*.txt
