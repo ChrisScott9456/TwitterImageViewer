@@ -33,8 +33,7 @@ export class CacheService {
 			throw e;
 		}
 
-		r.posts = this.filterPosts(r.posts);
-		console.log(r);
+		if (r.posts) r.posts = this.filterPosts(r.posts);
 
 		return r;
 	}

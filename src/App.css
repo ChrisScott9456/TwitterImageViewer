@@ -85,3 +85,24 @@ span.ant-input-group-addon {
 .cardBody {
 	font-size: 0.75vmax;
 }
+
+.ReactModal__Overlay {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.modalClass {
+	text-align: center;
+	width: 100%;
+	background-color: rgba(0, 0, 0, 0.3);
+}
+
+.modalOverlayClass {
+	background-color: rgba(0, 0, 0, 0.3);
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}

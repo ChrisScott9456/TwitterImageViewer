@@ -5,8 +5,10 @@ import { Meta } from 'antd/lib/list/Item';
 import { TwitterService } from '../util/TwitterService';
 import { CacheService } from '../util/CacheService';
 import { CacheInterface } from '../backend/cache/cache.interface';
-import { SwitcherOutlined, PlusOutlined } from '@ant-design/icons';
+import { SwitcherOutlined, PlusOutlined, LeftOutlined, RightOutlined, CloseOutlined } from '@ant-design/icons';
 import { notify } from '../util/notification';
+import Carousel from 'nuka-carousel';
+import ReactModal from 'react-modal';
 
 const twitterRegex = new RegExp(/http[s]?:\/\/t.co\/[a-zA-Z0-9]*/g);
 const paginationSizeOptions = ['25', '50'];
@@ -24,6 +26,7 @@ interface StateInterface {
 	closeText: boolean; // Flag to open/close tweet text boxes under images
 	inputError: boolean; // Flag to show error if user inputs wrong username format
 	loadMoreAttempts: number; // Total number of times a user can click the Load More button and get an error before the button disappears
+	imageModal: string[]; // Image urls to display in modal
 }
 
 const defaultState: StateInterface = {
@@ -37,6 +40,7 @@ const defaultState: StateInterface = {
 	closeText: false,
 	inputError: false,
 	loadMoreAttempts: 0,
+	imageModal: [],
 };
 
 class SearchPage extends React.Component {
@@ -226,7 +230,13 @@ class SearchPage extends React.Component {
 							<List.Item>
 								<Card
 									bodyStyle={{ display: this.state.closeText ? 'none' : '' }}
-									cover={<List grid={{ column: item.image_urls.length === 1 ? 1 : 2 }} dataSource={item?.image_urls} renderItem={(image) => <Image src={image} />} />}
+									cover={
+										<List
+											grid={{ column: item.image_urls.length === 1 ? 1 : 2 }}
+											dataSource={item?.image_urls}
+											renderItem={(image) => <Image src={image} preview={false} onClick={(e) => this.setState({ imageModal: item.image_urls })} style={{ cursor: 'pointer' }} />}
+										/>
+									}
 								>
 									{!this.state.closeText ? <Meta title={this.getTweetURL(item?.text)} /> : null}
 								</Card>
@@ -234,6 +244,29 @@ class SearchPage extends React.Component {
 						)}
 					/>
 				) : null}
+				<ReactModal className="modalClass" overlayClassName="modalOverlayClass" isOpen={this.state.imageModal.length > 0} onRequestClose={(e) => this.setState({ imageModal: [] })}>
+					<div style={{ textAlign: 'left' }}>
+						<Button className="button" onClick={(e) => this.setState({ imageModal: [] })}>
+							<CloseOutlined />
+						</Button>
+					</div>
+					<Carousel
+						renderCenterLeftControls={({ previousSlide }) => (
+							<Button className="button" onClick={previousSlide}>
+								<LeftOutlined />
+							</Button>
+						)}
+						renderCenterRightControls={({ nextSlide }) => (
+							<Button className="button" onClick={nextSlide}>
+								<RightOutlined />
+							</Button>
+						)}
+					>
+						{this.state.imageModal.map((el) => (
+							<Image src={el} preview={false} />
+						))}
+					</Carousel>
+				</ReactModal>
 			</div>
 		);
 	}
