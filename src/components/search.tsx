@@ -119,7 +119,7 @@ class SearchPage extends React.Component {
 		// If no results received, retry one time with larger max_results set
 		if (!timeline?.data && timeline?.meta?.result_count === 0 && this.state.attemptCounter <= maxSearchAttempts) {
 			this.setState({ attemptCounter: maxSearchAttempts + 1 }); // Set to maxSearchAttempts so it only executes once
-			const newMaxResults = maxResults && parseInt(maxResults) + 5 > 100 ? `${parseInt(maxResults) + 5}` : '10'; // Current maxResults + 5 (if > 100) or default to 10 (initial is 5 so we just double it)
+			const newMaxResults = maxResults && parseInt(maxResults) + 5 > 100 ? `${parseInt(maxResults) + 5}` : '15'; // Current maxResults + 5 (if > 100) or default to 10 (initial is 5 so we just double it)
 			this.executeSearch(userid, this.state.paginationId, newMaxResults);
 			return;
 		}
