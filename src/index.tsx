@@ -7,10 +7,11 @@ import reportWebVitals from './reportWebVitals';
 import 'antd/dist/antd.css';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+	<React.StrictMode>
+		<App />,
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+	</React.StrictMode>,
+	document.getElementById('root')
 );
 
 // If you want to start measuring performance in your app, pass a function

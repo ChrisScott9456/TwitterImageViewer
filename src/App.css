@@ -1,3 +1,8 @@
+@viewport {
+	width: device-width;
+	zoom: 1;
+}
+
 .App {
 	text-align: center;
 	background-color: #282c34;
@@ -38,6 +43,10 @@
 	margin-top: 0.1vmax;
 	min-height: 1vmax;
 	min-width: 1vmax;
+}
+
+.ant-card {
+	word-wrap: break-word;
 }
 
 div .ant-card-body {
@@ -84,6 +93,7 @@ span.ant-input-group-addon {
 
 .cardBody {
 	font-size: 0.75vmax;
+	display: block;
 }
 
 .ReactModal__Overlay {

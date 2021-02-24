@@ -17,6 +17,7 @@ const maxSearchAttempts = 5;
 const maxLoadMoreAttempts = 3;
 
 interface StateInterface {
+	rowCount: number; // Number of images to display per row (for mobile users)
 	searchString: string; // The username string of the search
 	dataSet: CacheInterface; // The posts displayed in the grid
 	currentPage: number; // Current page number
@@ -24,13 +25,14 @@ interface StateInterface {
 	paginationId: string; // The ID of the last image in the dataset used to search for more posts
 	attemptCounter: number; // Counter used to prevent too many searches to find a new post w/ image to add
 	searchFlag: boolean; // Flag used to prevent load more button from searching while search already executing
-	closeText: boolean; // Flag to open/close tweet text boxes under images
+	closeText: boolean; // Flag to open/close tweet text boxes under images (default true for mobile users)
 	inputError: boolean; // Flag to show error if user inputs wrong username format
 	loadMoreAttempts: number; // Total number of times a user can click the Load More button and get an error before the button disappears
 	imageModal: string[]; // Image urls to display in modal
 }
 
 const defaultState: StateInterface = {
+	rowCount: 5,
 	searchString: '',
 	dataSet: { _id: '', posts: [] },
 	currentPage: 1,
@@ -50,6 +52,13 @@ class SearchPage extends React.Component {
 	// Resets the state to default values
 	defaultState() {
 		this.setState(defaultState);
+		this.setMobile();
+	}
+
+	setMobile() {
+		if (window.matchMedia('(max-width: 768px)').matches) {
+			this.setState({ rowCount: 2, closeText: true });
+		}
 	}
 
 	onSearch = async (username: string) => {
@@ -73,6 +82,11 @@ class SearchPage extends React.Component {
 		this.setState({ searchFlag: true });
 
 		await this.executeSearch(id);
+
+		// Notify when initial search doesn't have any results to show
+		if (this.state.dataSet?.posts?.length < 1) {
+			notify('COULD NOT FIND ANY IMAGES FROM THE USER: @' + username);
+		}
 	};
 
 	executeSearch = async (userid: string, lastid?: string, maxResults?: string) => {
@@ -214,12 +228,12 @@ class SearchPage extends React.Component {
 						</Tooltip>
 					) : null}
 					{this.state.dataSet.posts.length > 0 ? (
-						<Tooltip title="Close Text" placement="top">
-							<Button className="button" size="large" icon={<SwitcherOutlined />} onClick={() => this.setState({ closeText: !this.state.closeText })} />
+						<Tooltip title={this.state.closeText ? 'Open Text' : 'Close Text'} placement="top">
+							<Button className="button" size="large" icon={<SwitcherOutlined />} ghost={this.state.closeText} onClick={() => this.setState({ closeText: !this.state.closeText })} />
 						</Tooltip>
 					) : null}
 				</Row>
-				{this.state.dataSet.posts.length > 0 ? (
+				{this.state.paginationId ? (
 					<List
 						pagination={{
 							disabled: this.state.searchFlag,
@@ -232,7 +246,7 @@ class SearchPage extends React.Component {
 							onChange: (page) => this.setState({ currentPage: page }),
 							onShowSizeChange: (current, size) => this.setState({ currentPage: current, paginationSize: size.toString() }),
 						}}
-						grid={{ gutter: 16, column: 5 }}
+						grid={{ gutter: 16, column: this.state.rowCount }}
 						dataSource={this.state.dataSet.posts}
 						renderItem={(item) => (
 							<List.Item>
