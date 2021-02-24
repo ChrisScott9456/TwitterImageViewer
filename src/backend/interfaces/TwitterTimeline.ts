@@ -2,6 +2,7 @@ export interface TwitterTimeline {
 	data: TwitterTimelineData[];
 	includes: TwitterTimelineMedia;
 	meta: TwitterMeta;
+	errors?: TwitterError[];
 }
 
 export interface TwitterTimelineData {
@@ -27,4 +28,14 @@ export interface TwitterMeta {
 	newest_id?: string;
 	result_count: number;
 	next_token?: string;
+}
+
+export interface TwitterError {
+	detail: string;
+	parameter: string;
+	resource_type: string;
+	section: string;
+	title: string;
+	type: string;
+	value: string;
 }

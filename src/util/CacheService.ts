@@ -6,6 +6,10 @@ import { http } from '../backend/util/http';
 
 export class CacheService {
 	static async insertCacheDocument(cacheDoc: CacheInterface) {
+		if (cacheDoc.posts.length < 1) {
+			throw new Error('ERROR UPDATING CACHE - No posts to cache!');
+		}
+
 		const request: AxiosRequestConfig = {
 			method: 'POST',
 			url: `/insertCacheDocument`,

@@ -9,6 +9,7 @@ import { SwitcherOutlined, PlusOutlined, LeftOutlined, RightOutlined, CloseOutli
 import { notify } from '../util/notification';
 import Carousel from 'nuka-carousel';
 import ReactModal from 'react-modal';
+import { to } from 'await-to-js';
 
 const twitterRegex = new RegExp(/http[s]?:\/\/t.co\/[a-zA-Z0-9]*/g);
 const paginationSizeOptions = ['25', '50'];
@@ -85,6 +86,13 @@ class SearchPage extends React.Component {
 			return;
 		}
 
+		// If Twitter response contains an error
+		if (timeline?.errors && timeline?.errors?.length > 0) {
+			notify('TWITTER ERROR', timeline.errors[0].detail);
+			this.setState({ searchFlag: false });
+			return;
+		}
+
 		// Get cache for the current user
 		const cache = await CacheService.getCache(userid);
 		this.setState({ attemptCounter: this.state.attemptCounter + 1 }); // Increment attempt counter
@@ -104,8 +112,8 @@ class SearchPage extends React.Component {
 				this.setState({ dataSet: newCache });
 
 				// Add new posts to the cache
-				const cacheSuccess = await CacheService.insertCacheDocument(newCache);
-				if (!cacheSuccess) notify('FAILED TO UPDATE CACHE WITH LATEST POSTS');
+				const [cacheError, cacheSuccess] = await to(CacheService.insertCacheDocument(newCache));
+				if (!cacheSuccess || cacheError) console.error(cacheError.message || 'FAILED TO UPDATE CACHE WITH LATEST POSTS');
 
 				// Set lastid to the last id of the cache
 				if (!getMore) {
@@ -263,7 +271,7 @@ class SearchPage extends React.Component {
 						)}
 					>
 						{this.state.imageModal.map((el) => (
-							<Image src={el} preview={false} />
+							<Image src={el} preview={false} style={{ maxHeight: '90vh' }} />
 						))}
 					</Carousel>
 				</ReactModal>
