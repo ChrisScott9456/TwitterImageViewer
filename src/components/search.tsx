@@ -1,6 +1,6 @@
 import React from 'react';
 import Search from 'antd/lib/input/Search';
-import { Card, List, Image, Button, Row, Tooltip, Alert, Divider } from 'antd';
+import { Card, List, Image, Button, Row, Tooltip, Alert, Col } from 'antd';
 import { Meta } from 'antd/lib/list/Item';
 import { TwitterService } from '../util/TwitterService';
 import { CacheService } from '../util/CacheService';
@@ -214,25 +214,27 @@ class SearchPage extends React.Component {
 
 	render() {
 		return (
-			<div>
-				{this.state.inputError ? (
-					<Divider>
-						<Alert className="search" style={{ textAlign: 'left' }} message="Only letters, numbers, and underscores are allowed in a Twitter username!" type="error" showIcon />
-					</Divider>
-				) : null}
-				<Row align="middle" justify="center" gutter={[10, 10]}>
-					<Search className="search" placeholder="Enter Twitter Username" value={this.state.searchString} onChange={(e) => this.trimWhitespace(e)} onSearch={(value) => this.onSearch(value.trim())} addonBefore="@" />
-					{this.state.dataSet.posts.length > 0 && (this.onLastPage() || this.state.searchFlag) && this.state.loadMoreAttempts < maxLoadMoreAttempts ? (
-						<Tooltip title="Load More" placement="top">
-							<Button className="button" type="primary" size="large" icon={<PlusOutlined />} loading={this.state.searchFlag} onClick={() => this.loadMore()} />
-						</Tooltip>
-					) : null}
-					{this.state.dataSet.posts.length > 0 ? (
-						<Tooltip title={this.state.closeText ? 'Open Text' : 'Close Text'} placement="top">
-							<Button className="button" size="large" icon={<SwitcherOutlined />} ghost={this.state.closeText} onClick={() => this.setState({ closeText: !this.state.closeText })} />
-						</Tooltip>
-					) : null}
+			<div className="searchDiv">
+				{this.state.inputError ? <Alert className="searchAlert" message="Only letters, numbers, and underscores are allowed in a Twitter username!" type="error" showIcon /> : null}
+				<Row className="searchBar" align="bottom" gutter={[10, 10]}>
+					<Col style={{ width: '25%', height: '100%', padding: 0, textAlign: 'left' }} />
+					<Col style={{ width: '50%', height: '100%', padding: 0, textAlign: 'left' }}>
+						<Search placeholder="Enter Twitter Username" value={this.state.searchString} onChange={(e) => this.trimWhitespace(e)} onSearch={(value) => this.onSearch(value.trim())} addonBefore="@" />
+					</Col>
+					<Col style={{ width: '25%', height: '100%', padding: 0, textAlign: 'left' }}>
+						{this.state.dataSet.posts.length > 0 && (this.onLastPage() || this.state.searchFlag) && this.state.loadMoreAttempts < maxLoadMoreAttempts ? (
+							<Tooltip title="Load More" placement="top">
+								<Button className="button" type="primary" icon={<PlusOutlined />} loading={this.state.searchFlag} onClick={() => this.loadMore()} />
+							</Tooltip>
+						) : null}
+						{this.state.dataSet.posts.length > 0 ? (
+							<Tooltip title={this.state.closeText ? 'Open Text' : 'Close Text'} placement="top">
+								<Button className="button" icon={<SwitcherOutlined />} ghost={this.state.closeText} onClick={() => this.setState({ closeText: !this.state.closeText })} />
+							</Tooltip>
+						) : null}
+					</Col>
 				</Row>
+
 				{this.state.paginationId ? (
 					<List
 						pagination={{

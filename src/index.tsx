@@ -8,7 +8,7 @@ import 'antd/dist/antd.css';
 
 ReactDOM.render(
 	<React.StrictMode>
-		<App />,
+		<App />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 	</React.StrictMode>,
 	document.getElementById('root')

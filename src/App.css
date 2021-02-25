@@ -28,21 +28,51 @@
 	color: #61dafb;
 }
 
-.search {
-	min-width: 33vmax;
-	max-width: 33vmax;
+.searchDiv {
+	width: 100%;
+	display: grid;
+	justify-items: center;
+	text-align: center;
+}
+
+.searchBar {
+	width: 100%;
+	max-height: 4vmax;
+	height: 4vmax;
+}
+
+.searchAlert {
+	text-align: left;
+	width: 50%;
+}
+
+.ant-alert.searchAlert {
+	font-size: 1vmax;
+}
+
+.ant-alert.search {
+	width: 100%;
+}
+
+input.ant-input {
+	height: 100%;
+}
+
+.ant-btn,
+.ant-btn.button {
+	min-height: 4vmax;
+	min-width: 4vmax;
+	vertical-align: top;
 }
 
 .button {
-	margin-left: 0.5vmax;
-	min-height: 2vmax;
-	min-width: 2vmax;
+	margin-left: 0.5vw;
 }
 
-.button svg {
-	margin-top: 0.1vmax;
+.ant-btn svg {
 	min-height: 1vmax;
 	min-width: 1vmax;
+	margin-top: 5px;
 }
 
 .ant-card {
@@ -54,33 +84,7 @@ div .ant-card-body {
 }
 
 .ant-list-item-meta-title a {
-	font-size: 0.75vmax;
-}
-
-.ant-input,
-.ant-input-search-button {
-	min-height: 2vmax;
-	max-height: 2vmax;
-}
-
-.ant-input-search-button svg {
-	margin-top: 0.2vmax;
-	min-height: 1vmax;
-	min-width: 1vmax;
-}
-
-input.ant-input {
-	font-size: 0.75vmax;
-	padding-bottom: 0.3vmax;
-}
-
-span.ant-input-group-addon {
 	font-size: 1vmax;
-	padding-bottom: 0.2vmax;
-}
-
-.ant-input-search-button {
-	min-width: 2vmax;
 }
 
 .ant-list-pagination {
@@ -92,7 +96,7 @@ span.ant-input-group-addon {
 }
 
 .cardBody {
-	font-size: 0.75vmax;
+	font-size: 1vmax;
 	display: block;
 }
 
@@ -115,4 +119,25 @@ span.ant-input-group-addon {
 	left: 0;
 	right: 0;
 	bottom: 0;
+}
+
+@media (min-width: 1024px) {
+	.searchBar {
+		max-height: 2vmax;
+		height: 2vmax;
+	}
+
+	input.ant-input {
+		font-size: 1vmax;
+	}
+
+	span.ant-input-group-addon {
+		font-size: 1vmax;
+	}
+
+	.ant-btn,
+	.ant-btn.button {
+		min-height: 2vmax;
+		min-width: 2vmax;
+	}
 }
