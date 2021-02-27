@@ -10,6 +10,7 @@ import { notify } from '../util/notification';
 import Carousel from 'nuka-carousel';
 import ReactModal from 'react-modal';
 import { to } from 'await-to-js';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 const twitterRegex = new RegExp(/http[s]?:\/\/t.co\/[a-zA-Z0-9]*/g);
 const paginationSizeOptions = ['25', '50'];
@@ -45,9 +46,23 @@ const defaultState: StateInterface = {
 	loadMoreAttempts: 0,
 	imageModal: [],
 };
-
-class SearchPage extends React.Component {
+class SearchPage extends React.Component<RouteComponentProps<{ username: string; page: string }>, StateInterface> {
 	state: StateInterface = defaultState; // Set default state
+
+	async componentDidMount() {
+		const username = this.props.match.params.username;
+		let page = parseInt(this.props.match.params.page);
+		console.log(page);
+		if (username) await this.onSearch(username);
+		if (page) {
+			// Redirect pages larger than pagination size to last page
+			if (this.state.dataSet.posts.length / this.state.paginationSize < page) {
+				page = Math.ceil(this.state.dataSet.posts.length / this.state.paginationSize);
+			}
+			this.setState({ currentPage: page });
+			this.props.history.push(`/${this.state.searchString}/${this.state.currentPage}`);
+		}
+	}
 
 	// Resets the state to default values
 	defaultState() {
@@ -80,6 +95,9 @@ class SearchPage extends React.Component {
 		// Set to currently searching
 		this.setState({ searchString: username });
 		this.setState({ searchFlag: true });
+
+		// Change route
+		this.props.history.push(`/${username}/${this.state.currentPage}`);
 
 		await this.executeSearch(id);
 
@@ -245,8 +263,11 @@ class SearchPage extends React.Component {
 							pageSizeOptions: paginationSizeOptions,
 							pageSize: this.state.paginationSize,
 							defaultPageSize: this.state.paginationSize,
-							onChange: (page) => this.setState({ currentPage: page }),
-							onShowSizeChange: (current, size) => this.setState({ currentPage: current, paginationSize: size.toString() }),
+							onChange: (page) => {
+								this.setState({ currentPage: page });
+								this.props.history.push(`/${this.state.searchString}/${page}`);
+							},
+							onShowSizeChange: (current, size) => this.setState({ currentPage: current, paginationSize: size }),
 						}}
 						grid={{ gutter: 16, column: this.state.rowCount }}
 						dataSource={this.state.dataSet.posts}
@@ -296,4 +317,4 @@ class SearchPage extends React.Component {
 	}
 }
 
-export default SearchPage;
+export default withRouter(SearchPage);
