@@ -3,6 +3,27 @@
 	zoom: 1;
 }
 
+.anticon-search svg {
+	color: rgba(255, 253, 250, 0.45);
+}
+
+div.ant-alert-error {
+	background-color: rgb(66, 9, 0);
+	border-color: rgb(131, 12, 0);
+}
+
+div.ant-alert-message {
+	color: white;
+}
+
+div.ant-notification-notice-message {
+	color: white;
+}
+
+div.ant-notification-notice-description {
+	color: red;
+}
+
 .App {
 	text-align: center;
 	background-color: #282c34;
@@ -52,6 +73,13 @@
 
 .ant-alert.search {
 	width: 100%;
+}
+
+.ant-input,
+.ant-input-group-addon {
+	color: white;
+	background-color: rgb(26, 29, 30);
+	border-color: rgb(65, 70, 73);
 }
 
 input.ant-input {
