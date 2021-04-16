@@ -52,12 +52,17 @@ class SearchPage extends React.Component<RouteComponentProps<{ username: string;
 	async componentDidMount() {
 		const username = this.props.match.params.username;
 		let page = parseInt(this.props.match.params.page);
-		console.log(page);
+
 		if (username) await this.onSearch(username);
 		if (page) {
 			// Redirect pages larger than pagination size to last page
 			if (this.state.dataSet.posts.length / this.state.paginationSize < page) {
-				page = Math.ceil(this.state.dataSet.posts.length / this.state.paginationSize);
+				const val = Math.ceil(this.state.dataSet.posts.length / this.state.paginationSize);
+
+				// Only change if val is not 0 (can happen if the initial search returns no results)
+				if (val !== 0) {
+					page = val;
+				}
 			}
 			this.setState({ currentPage: page });
 			this.props.history.push(`/${this.state.searchString}/${this.state.currentPage}`);
@@ -102,7 +107,7 @@ class SearchPage extends React.Component<RouteComponentProps<{ username: string;
 		await this.executeSearch(id);
 
 		// Notify when initial search doesn't have any results to show
-		if (this.state.dataSet?.posts?.length < 1) {
+		if (this.state.dataSet?.posts?.length < 1 && this.state.attemptCounter <= maxSearchAttempts) {
 			notify('COULD NOT FIND ANY IMAGES FROM THE USER: @' + username);
 		}
 	};
@@ -137,6 +142,12 @@ class SearchPage extends React.Component<RouteComponentProps<{ username: string;
 			this.setState({ paginationId: timeline.data[timeline.data.length - 1].id });
 			const posts = TwitterService.extractPostsFromTimeline(timeline);
 
+			// If no posts received, retry one time with larger max_results set
+			if (posts.length <= 0 && this.state.attemptCounter <= maxSearchAttempts) {
+				this.retrySearchLargerMax(maxResults, userid);
+				return;
+			}
+
 			// Only update cache if we receive any posts
 			if (posts) {
 				// Build current cache
@@ -157,10 +168,8 @@ class SearchPage extends React.Component<RouteComponentProps<{ username: string;
 		}
 
 		// If no results received, retry one time with larger max_results set
-		if (!timeline?.data && timeline?.meta?.result_count === 0 && this.state.attemptCounter <= maxSearchAttempts) {
-			this.setState({ attemptCounter: maxSearchAttempts + 1 }); // Set to maxSearchAttempts so it only executes once
-			const newMaxResults = maxResults && parseInt(maxResults) + 5 > 100 ? `${parseInt(maxResults) + 5}` : '15'; // Current maxResults + 5 (if > 100) or default to 10 (initial is 5 so we just double it)
-			this.executeSearch(userid, this.state.paginationId, newMaxResults);
+		if (!timeline?.data && this.state.attemptCounter <= maxSearchAttempts) {
+			this.retrySearchLargerMax(maxResults, userid);
 			return;
 		}
 
@@ -179,6 +188,12 @@ class SearchPage extends React.Component<RouteComponentProps<{ username: string;
 		// Set the searchFlag to false when done searching so we can allow searching again
 		this.setState({ searchFlag: false, attemptCounter: 0 });
 	};
+
+	retrySearchLargerMax(maxResults: string, userid: string) {
+		this.setState({ attemptCounter: maxSearchAttempts + 1 }); // Set to maxSearchAttempts so it only executes once
+		const newMaxResults = maxResults && parseInt(maxResults) + 5 > 100 ? `${parseInt(maxResults) + 5}` : '15'; // Current maxResults + 5 (if > 100) or default to 10 (initial is 5 so we just double it)
+		this.executeSearch(userid, this.state.paginationId, newMaxResults);
+	}
 
 	// Helper function to determine if currently on the last page
 	// pagesAway is how many pages from the last page we should check for the condition
