@@ -76,10 +76,15 @@ div.ant-notification-notice-description {
 }
 
 .ant-input,
-.ant-input-group-addon {
+.ant-input-group-addon,
+.ant-input-affix-wrapper {
 	color: white;
 	background-color: rgb(26, 29, 30);
 	border-color: rgb(65, 70, 73);
+}
+
+.anticon-close-circle svg {
+	font-size: 0.75vmax;
 }
 
 input.ant-input {

@@ -11,6 +11,7 @@ import Carousel from 'nuka-carousel';
 import ReactModal from 'react-modal';
 import { to } from 'await-to-js';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { TwitterPost } from '../backend/interfaces/TwitterPost';
 
 const twitterRegex = new RegExp(/http[s]?:\/\/t.co\/[a-zA-Z0-9]*/g);
 const paginationSizeOptions = ['25', '50'];
@@ -20,6 +21,7 @@ const maxLoadMoreAttempts = 3;
 interface StateInterface {
 	rowCount: number; // Number of images to display per row (for mobile users)
 	searchString: string; // The username string of the search
+	filterStrings: string[]; // The array of strings used to filter the current list of posts
 	dataSet: CacheInterface; // The posts displayed in the grid
 	currentPage: number; // Current page number
 	paginationSize: number; // Total results to display per page
@@ -35,6 +37,7 @@ interface StateInterface {
 const defaultState: StateInterface = {
 	rowCount: 5,
 	searchString: '',
+	filterStrings: [],
 	dataSet: { _id: '', posts: [] },
 	currentPage: 1,
 	paginationSize: parseInt(paginationSizeOptions[0]),
@@ -245,17 +248,36 @@ class SearchPage extends React.Component<RouteComponentProps<{ username: string;
 		return username ? /^\w+$/.test(username) : true;
 	}
 
+	getFilteredPosts() {
+		const filteredPosts: TwitterPost[] = [];
+
+		this.state.dataSet.posts.forEach((post) => {
+			this.state.filterStrings.forEach((filter) => {
+				if (post.text.replace(/\s/g, '').toLowerCase().match(filter)) {
+					filteredPosts.push(post);
+				}
+			});
+		});
+
+		return filteredPosts;
+	}
+
 	render() {
 		return (
 			<div className="searchDiv">
 				{this.state.inputError ? <Alert className="searchAlert" message="Only letters, numbers, and underscores are allowed in a Twitter username!" type="error" showIcon /> : null}
 				<Row className="searchBar" align="bottom" gutter={[10, 10]}>
 					<Col style={{ width: '25%', height: '100%', padding: 0, textAlign: 'left' }} />
-					<Col style={{ width: '50%', height: '100%', padding: 0, textAlign: 'left' }}>
-						<Search placeholder="Enter Twitter Username" value={this.state.searchString} onChange={(e) => this.trimWhitespace(e)} onSearch={(value) => this.onSearch(value.trim())} addonBefore="@" />
+					<Col style={{ width: '30%', height: '100%', padding: 0, textAlign: 'left' }}>
+						<Search addonBefore="@" placeholder="Enter Twitter Username" value={this.state.searchString} onChange={(e) => this.trimWhitespace(e)} onSearch={(value) => this.onSearch(value.trim())} />
+					</Col>
+					<Col style={{ width: '20%', height: '100%', padding: 0, textAlign: 'left' }}>
+						<Tooltip title="Filter results by tweet text. Separate search terms with a space.">
+							<Search allowClear={true} placeholder="Filter..." onSearch={(value) => this.setState({ filterStrings: value.toLowerCase().split(' ') })} />
+						</Tooltip>
 					</Col>
 					<Col style={{ width: '25%', height: '100%', padding: 0, textAlign: 'left' }}>
-						{this.state.dataSet.posts.length > 0 && (this.onLastPage() || this.state.searchFlag) && this.state.loadMoreAttempts < maxLoadMoreAttempts ? (
+						{this.state.dataSet.posts.length > 0 && this.state.filterStrings.length <= 0 && (this.onLastPage() || this.state.searchFlag) && this.state.loadMoreAttempts < maxLoadMoreAttempts ? (
 							<Tooltip title="Load More" placement="top">
 								<Button className="button" type="primary" icon={<PlusOutlined />} loading={this.state.searchFlag} onClick={() => this.loadMore()} />
 							</Tooltip>
@@ -285,23 +307,25 @@ class SearchPage extends React.Component<RouteComponentProps<{ username: string;
 							onShowSizeChange: (current, size) => this.setState({ currentPage: current, paginationSize: size }),
 						}}
 						grid={{ gutter: 16, column: this.state.rowCount }}
-						dataSource={this.state.dataSet.posts}
-						renderItem={(item) => (
-							<List.Item>
-								<Card
-									bodyStyle={{ display: this.state.closeText ? 'none' : '' }}
-									cover={
-										<List
-											grid={{ column: item.image_urls.length === 1 ? 1 : 2 }}
-											dataSource={item?.image_urls}
-											renderItem={(image) => <Image src={image} preview={false} onClick={(e) => this.setState({ imageModal: item.image_urls })} style={{ cursor: 'pointer' }} />}
-										/>
-									}
-								>
-									{!this.state.closeText ? <Meta title={this.getTweetURL(item?.text)} /> : null}
-								</Card>
-							</List.Item>
-						)}
+						dataSource={this.state.filterStrings.length > 0 ? this.getFilteredPosts() : this.state.dataSet.posts}
+						renderItem={(item) =>
+							item ? (
+								<List.Item>
+									<Card
+										bodyStyle={{ display: this.state.closeText ? 'none' : '' }}
+										cover={
+											<List
+												grid={{ column: item.image_urls.length === 1 ? 1 : 2 }}
+												dataSource={item?.image_urls}
+												renderItem={(image) => <Image src={image} preview={false} onClick={(e) => this.setState({ imageModal: item.image_urls })} style={{ cursor: 'pointer' }} />}
+											/>
+										}
+									>
+										{!this.state.closeText ? <Meta title={this.getTweetURL(item?.text)} /> : null}
+									</Card>
+								</List.Item>
+							) : null
+						}
 					/>
 				) : null}
 				<ReactModal className="modalClass" overlayClassName="modalOverlayClass" isOpen={this.state.imageModal.length > 0} onRequestClose={(e) => this.setState({ imageModal: [] })}>
